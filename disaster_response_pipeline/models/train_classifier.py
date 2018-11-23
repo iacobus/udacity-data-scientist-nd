@@ -26,6 +26,8 @@ stop_words = stopwords.words("english")
 
 
 def load_data(database_filepath):
+    """Loads SQLite database file into a data frame,
+    generating feature and target variables"""
     engine = create_engine(f'sqlite:///{database_filepath}')
     df = pd.read_sql("SELECT * FROM messages", con=engine)
     X = df['message']
@@ -34,13 +36,15 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
+    """Tokenizes a piece of text, normalizing case,
+    removing puntuaction and lemmatizing"""
     # normalize case and remove punctuation
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
 
     # tokenize text
     tokens = word_tokenize(text)
 
-    # lemmatize andremove stop words
+    # lemmatize and remove stop words
     tokens = [
         lemmatizer.lemmatize(word) for word in tokens if word not in stop_words
         ]
@@ -49,6 +53,8 @@ def tokenize(text):
 
 
 def build_model():
+    """Builds a multi-target classifier backed by a
+    Random Forest classifier, via a Pipeline of counts and TF-IDF"""
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -61,6 +67,8 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """Scores the provided model against the given test set,
+    for each category"""
     Y_pred = model.predict(X_test)
 
     for index, column in enumerate(category_names):
@@ -69,11 +77,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    """Saves the provided model in a pickle file"""
     with open(model_filepath, 'wb') as fid:
         pickle.dump(model, fid)
 
 
 def main():
+    """Runs the classifier"""
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))

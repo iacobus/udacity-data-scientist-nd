@@ -4,12 +4,15 @@ from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
+    """Reads and combines into a DataFrame the provided CSV files"""
     messages_df = pd.DataFrame.from_csv(messages_filepath)
     categories_df = pd.DataFrame.from_csv(categories_filepath)
     return pd.concat([messages_df, categories_df], axis=1)
 
 
 def clean_data(df):
+    """Fixes values, removes duplicates,
+    and extracts categories out of DataFrame"""
     # Extract column names from values, and rename
     categories = df.categories.str.split(";", expand=True)
     row = categories.iloc[0]
@@ -32,11 +35,14 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    """Saves provided DataFrame into provided SQLite database file"""
     engine = create_engine("sqlite:///" + database_filename)
     df.to_sql('messages', engine, index=False)
 
 
 def main():
+    """Runs this file to load, clean, and persist to a DB
+    the data provided in filenames"""
     if len(sys.argv) == 4:
 
         messages_path, categories_path, database_path = sys.argv[1:]
