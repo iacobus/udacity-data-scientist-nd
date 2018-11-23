@@ -7,11 +7,6 @@ import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('punkt')
-lemmatizer = WordNetLemmatizer()
-stop_words = stopwords.words("english")
 
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -23,6 +18,13 @@ from sklearn.metrics import classification_report
 
 import pickle
 
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('punkt')
+lemmatizer = WordNetLemmatizer()
+stop_words = stopwords.words("english")
+
+
 def load_data(database_filepath):
     engine = create_engine(f'sqlite:///{database_filepath}')
     df = pd.read_sql("SELECT * FROM messages", con=engine)
@@ -31,16 +33,17 @@ def load_data(database_filepath):
     return X, Y, Y.columns
 
 
-
 def tokenize(text):
     # normalize case and remove punctuation
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
 
     # tokenize text
     tokens = word_tokenize(text)
-    
+
     # lemmatize andremove stop words
-    tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
+    tokens = [
+        lemmatizer.lemmatize(word) for word in tokens if word not in stop_words
+        ]
 
     return tokens
 
@@ -52,7 +55,7 @@ def build_model():
         ('multi', MultiOutputClassifier(RandomForestClassifier()))
     ])
     parameters = {
-        "multi__estimator__n_estimators": [1,5,10]
+        "multi__estimator__n_estimators": [1, 5, 10]
     }
     return GridSearchCV(pipeline, parameters)
 
@@ -62,13 +65,12 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
     for index, column in enumerate(category_names):
         print(f'Report for {column}')
-        print(classification_report(Y_test[column].values, Y_pred[:,index]))
-
+        print(classification_report(Y_test[column].values, Y_pred[:, index]))
 
 
 def save_model(model, model_filepath):
     with open(model_filepath, 'wb') as fid:
-        pickle.dump(model, fid)  
+        pickle.dump(model, fid)
 
 
 def main():
@@ -76,14 +78,16 @@ def main():
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
+        X_train, X_test, Y_train, Y_test = train_test_split(
+                X, Y, test_size=0.2
+                )
+
         print('Building model...')
         model = build_model()
-        
+
         print('Training model...')
         model.fit(X_train, Y_train)
-        
+
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
 
@@ -93,12 +97,11 @@ def main():
         print('Trained model saved!')
 
     else:
-        print('Please provide the filepath of the disaster messages database '\
-              'as the first argument and the filepath of the pickle file to '\
-              'save the model to as the second argument. \n\nExample: python '\
+        print('Please provide the filepath of the disaster messages database '
+              'as the first argument and the filepath of the pickle file to '
+              'save the model to as the second argument. \n\nExample: python '
               'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
 
 
 if __name__ == '__main__':
     main()
-
