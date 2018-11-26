@@ -26,8 +26,18 @@ stop_words = stopwords.words("english")
 
 
 def load_data(database_filepath):
-    """Loads SQLite database file into a data frame,
-    generating feature and target variables"""
+    """
+    Loads SQLite database file into a data frame,
+    generating feature and target variables
+
+    Args:
+        database_filepath (String): Path to database file
+
+    Returns:
+        X (array-like): List of messages
+        Y (pandas DataFrame): One-hot encoded category variables
+        Columns (array-like): List of Y column names
+    """
     engine = create_engine(f'sqlite:///{database_filepath}')
     df = pd.read_sql("SELECT * FROM messages", con=engine)
     X = df['message']
@@ -36,8 +46,16 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
-    """Tokenizes a piece of text, normalizing case,
-    removing puntuaction and lemmatizing"""
+    """
+    Tokenizes a piece of text, normalizing case,
+    removing puntuaction and lemmatizing
+
+    Args:
+        text (String): Text to tokenize
+
+    Returns:
+        tokens (array-like): List of extracted tokens
+    """
     # normalize case and remove punctuation
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
 
@@ -53,8 +71,17 @@ def tokenize(text):
 
 
 def build_model():
-    """Builds a multi-target classifier backed by a
-    Random Forest classifier, via a Pipeline of counts and TF-IDF"""
+    """
+    Builds a multi-target classifier backed by a
+    Random Forest classifier, via a Pipeline of counts and TF-IDF
+
+    Args:
+        None
+
+    Returns:
+        model (GridSearchCV): Pipeline model to estimate with best
+        parameters
+    """
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -67,8 +94,19 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    """Scores the provided model against the given test set,
-    for each category"""
+    """
+    Scores the provided model against the given test set,
+    for each category
+
+    Args:
+        model (scikit estimator): Model to evaluate
+        X_test (pandas DataFrame): Features to test the model
+        Y_test (pandas DataFrame): Targets to test the model
+        category_names (array-like): List of target names
+
+    Returns:
+        None
+    """
     Y_pred = model.predict(X_test)
 
     for index, column in enumerate(category_names):
@@ -77,13 +115,28 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
-    """Saves the provided model in a pickle file"""
+    """
+    Saves the provided model in a pickle file
+
+    Args:
+        model (scikit estimator): Model to evaluate
+        model_filepath (string): Path to save the
+        pickle for the model
+    """
     with open(model_filepath, 'wb') as fid:
         pickle.dump(model, fid)
 
 
 def main():
-    """Runs the classifier"""
+    """
+    Runs the classifier
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
